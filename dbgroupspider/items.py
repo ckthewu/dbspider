@@ -12,8 +12,8 @@ class DbgroupspiderItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     groupname = scrapy.Field()
-    groupurl = scrapy.Field()
+    groupid = scrapy.Field()
     membersnum = scrapy.Field()
     tags = scrapy.Field()
-    bdgroups = scrapy.Field()
+    bdgroupsid = scrapy.Field()
 
