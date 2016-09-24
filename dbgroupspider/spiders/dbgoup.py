@@ -47,7 +47,12 @@ class DbgCrawlSpider(CrawlSpider):
     name = 'dbspider'
     allowed_domains =['www.douban.com']
     start_urls = [
-    "https://www.douban.com/group/User-behavior/",
+        "https://www.douban.com/group/explore/culture",
+        "https://www.douban.com/group/explore/travel",
+        "https://www.douban.com/group/explore/ent",
+        "https://www.douban.com/group/explore/fashion",
+        "https://www.douban.com/group/explore/life",
+        "https://www.douban.com/group/explore/tech",
     ]
     # start_urls = ["https://www.douban.com/group/ps-camp/",]
 
@@ -57,7 +62,7 @@ class DbgCrawlSpider(CrawlSpider):
 
     rules = [
         Rule(SgmlLinkExtractor(allow=('/group/[^/]+/$',)), callback='parse_group'),
-        Rule(SgmlLinkExtractor(allow=('/group/explore\?tag',)), follow=True),
+        Rule(SgmlLinkExtractor(allow=('/group/explore',)), follow=True),
     ]
 
     # file = codecs.open('/home/ckthewu/scrapyproject/dbgroupspider/scraped_data_utf8.json', 'r', encoding='utf-8')
@@ -70,37 +75,38 @@ class DbgCrawlSpider(CrawlSpider):
     def parse_group(self,response):
         # response.request.headers.get('Referrer', None)
         x = HtmlXPathSelector(response)
-        groupname = x.select('/html/head/title/text()').extract()[0].strip()[:-2]
-        groupid = self.idre.findall(str(x.select('//div[@class="rec-sec"]/span/a/@data-href').extract()[0]))[0]
         membersnum = int(self.mnre.findall(str(x.select('//div[@class="mod side-nav"]/p/a/text()').extract()))[0])
-        tags = x.select('//div[@class="group-tags"]/a/text()').extract()
-        bdgs = x.select\
-            ('//div[@class="bd"]//div[@class="group-list"]//div[@class="group-list-item"]/div[@class="title"]')
-        bdgroupsid = []
-        # for bdg in bdgs:
-        #     if bdg:
-        #         yield Request(bdg.select('a/@href').extract()[0], callback=self.parse_group)
-        #         bdgroup = {'bdgroupname':bdg.select('a/@title').extract()[0],'bdgroupurl':bdg.select('a/@href').extract()[0]}
-        #         bdgroups.append(bdgroup)
+        if membersnum>10000:
+            groupname = x.select('/html/head/title/text()').extract()[0].strip()[:-2]
+            groupid = self.idre.findall(str(x.select('//div[@class="rec-sec"]/span/a/@data-href').extract()[0]))[0]
+            tags = x.select('//div[@class="group-tags"]/a/text()').extract()
+            bdgs = x.select\
+                ('//div[@class="bd"]//div[@class="group-list"]//div[@class="group-list-item"]/div[@class="title"]')
+            bdgroupsid = []
+            # for bdg in bdgs:
+            #     if bdg:
+            #         yield Request(bdg.select('a/@href').extract()[0], callback=self.parse_group)
+            #         bdgroup = {'bdgroupname':bdg.select('a/@title').extract()[0],'bdgroupurl':bdg.select('a/@href').extract()[0]}
+            #         bdgroups.append(bdgroup)
 
-        for bdg in bdgs:
-            bdgnum = int(self.mnre.findall(str(bdg.select('span/text()').extract()))[0])
-            bdgid = self.idre.findall(str(bdg.select('a/@href').extract()[0]))[0]
-            if bdg and bdgnum>1000:
-                bdgroupsid.append(bdgid)
-                yield Request(bdg.select('a/@href').extract()[0], callback=self.parse_group)
-                    # bdgroup = {'bdgroupname':bdgnam,'bdgroupurl':bdg.select('a/@href').extract()[0],'bdgroupnum':bdgnum}
+            for bdg in bdgs:
+                bdgnum = int(self.mnre.findall(str(bdg.select('span/text()').extract()))[0])
+                bdgid = self.idre.findall(str(bdg.select('a/@href').extract()[0]))[0]
+                if bdg and bdgnum>10000:
+                    bdgroupsid.append(bdgid)
+                    yield Request(bdg.select('a/@href').extract()[0], callback=self.parse_group)
+                        # bdgroup = {'bdgroupname':bdgnam,'bdgroupurl':bdg.select('a/@href').extract()[0],'bdgroupnum':bdgnum}
 
 
 
-        # print groupname,groupurl,membersnum,tags,bdgoups
-        item = DbgroupspiderItem()
-        item['groupname'] = groupname
-        item['groupid'] = groupid
-        item['membersnum'] = membersnum
-        item['tags'] = tags
-        item['bdgroupsid'] = bdgroupsid
-        yield item
+            # print groupname,groupurl,membersnum,tags,bdgoups
+            item = DbgroupspiderItem()
+            item['groupname'] = groupname
+            item['groupid'] = groupid
+            item['membersnum'] = membersnum
+            item['tags'] = tags
+            item['bdgroupsid'] = bdgroupsid
+            yield item
 
 
 
